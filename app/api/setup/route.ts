@@ -1,0 +1,4 @@
+import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
+import { db } from '@/lib/db';
+export async function POST(req:Request){try{const count=Number((await db.query('SELECT COUNT(*)::int count FROM users')).rows[0].count);if(count>0)return NextResponse.json({error:'ระบบถูกตั้งค่าแล้ว'},{status:409});const {username,password,full_name}=await req.json();if(!username||!password||password.length<8||!full_name)return NextResponse.json({error:'กรอกข้อมูลให้ครบ และรหัสผ่านอย่างน้อย 8 ตัวอักษร'},{status:400});const hash=await bcrypt.hash(password,12);await db.query('INSERT INTO users(username,password_hash,full_name,role) VALUES($1,$2,$3,$4)',[username,hash,full_name,'admin']);return NextResponse.json({ok:true})}catch(e){return NextResponse.json({error:'สร้างผู้ดูแลระบบไม่สำเร็จ'},{status:500})}}
